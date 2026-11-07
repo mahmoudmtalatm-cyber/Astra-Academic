@@ -1,6 +1,6 @@
 # Astra Academic
 
-Answers study questions only from your own books and lecture notes, and cites the lecture name, lecture number and slide number.
+Answers study questions only from your own books and lecture notes, and cites the book and page.
 No account. Sessions are saved in your browser (IndexedDB).
 
 ## Run it
@@ -39,11 +39,7 @@ Without `--summarize` or `--summaries`, the map uses a plain text excerpt, which
 Re-running with the same `--id` replaces that book.
 
 ## Limits
-- Text is read from the PDF. Scanned pages without text are sent as images automatically; slide images are always sent too, so diagrams work.
+- Text is read from the PDF. Scanned pages without text are sent as images automatically; turn on
+  "Send page images too" in Settings for diagram-heavy books.
 - A PDF of questions can be about 14 MB per message.
 - Free Gemini keys have rate limits; add several keys and leave Smart rotation on.
-
-## Library contents
-Lectures 1-15 (Anatomy) plus the extra material: Lecture 5 missing slide, Lecture 7 missing slides,
-board drawings for Lectures 9 and 12. Lectures 2-15 have automatically extracted summaries
-(slide titles plus the first words of each slide); Lecture 1 and the photos have hand-written ones.
