@@ -430,13 +430,12 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
       </div>
       <div>
         <div class="brand-name">Astra</div>
-        <div class="brand-sub">Answers from your library</div>
+        <div class="brand-sub">Answers from your sources</div>
       </div>
     </div>
     <button class="btn-new" id="newSessionBtn" type="button"><svg width="16" height="16"><use href="#i-plus"/></svg>New session</button>
     <div class="session-list" id="sessionList"></div>
     <div class="side-foot">
-      <button class="side-btn" id="openLibraryBtn" type="button"><svg><use href="#i-book"/></svg>Library<span class="tail" id="libTail"></span></button>
       <button class="side-btn" id="openSettingsBtn" type="button"><svg><use href="#i-gear"/></svg>Settings<span class="tail"><span class="dot" id="keyDot"></span><span id="keyTail"></span></span></button>
     </div>
   </aside>
@@ -447,7 +446,6 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
     <header class="topbar">
       <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Open sessions"><svg><use href="#i-menu"/></svg></button>
       <div class="top-title" id="topTitle">New session</div>
-      <div class="top-meta"><span class="lib-meta" id="libMeta"></span></div>
     </header>
     <div class="banner hidden" id="banner" role="status"></div>
 
@@ -478,10 +476,9 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
   <div class="drawer-body">
     <div class="sec-h">Gemini API keys</div>
     <div id="keyList"></div>
-    <input class="field" id="newKeyLabel" placeholder="Label (for example Personal)" maxlength="40" autocomplete="off">
     <input class="field" id="newKeyValue" type="password" placeholder="Paste a Gemini API key" autocomplete="off" spellcheck="false">
     <div class="btn-row"><button class="btn primary" id="addKeyBtn" type="button">Add key</button><button class="btn" id="revealBtn" type="button">Show / hide</button></div>
-    <p class="hint">Free keys come from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. Questions and the library pages Astra needs are sent directly from this browser to Google. Nothing goes to any other server.</p>
+    <p class="hint">Free keys come from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. Questions and the source pages Astra needs are sent directly from this browser to Google. Nothing goes to any other server.</p>
 
     <div class="row-toggle" style="margin-top:14px">
       <div class="lbl"><strong>Smart key rotation</strong><span>Switch to another key on rate limits or errors</span></div>
@@ -489,10 +486,6 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
     </div>
 
     <div class="sec-h">Answering</div>
-    <select class="field" id="modelSelect" aria-label="Model">
-      <option value="gemini-2.5-flash">Gemini 2.5 Flash (fast, free-tier friendly)</option>
-      <option value="gemini-2.5-pro">Gemini 2.5 Pro (more careful, slower)</option>
-    </select>
     <div class="row-toggle">
       <div class="lbl"><strong>Send page images too</strong><span>Helps with diagrams. Slower and uses more quota.</span></div>
       <label class="switch"><input type="checkbox" id="imagesToggle"><span class="track"><span class="knob"></span></span></label>
@@ -506,22 +499,6 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
     </div>
     <input type="file" id="importFile" accept="application/json" hidden>
     <p class="hint">Sessions live in this browser's IndexedDB. Clearing site data removes them, so export a backup if you need one.</p>
-  </div>
-</aside>
-
-<!-- ═══════ LIBRARY DRAWER ═══════ -->
-<aside class="drawer" id="libraryDrawer" aria-label="Library">
-  <div class="drawer-head">
-    <div><h2>Library</h2><p id="libSub">The map Astra searches</p></div>
-    <button class="icon-btn" data-close type="button" aria-label="Close"><svg><use href="#i-x"/></svg></button>
-  </div>
-  <div class="drawer-body">
-    <div id="libBody"></div>
-    <div class="btn-row" style="margin-top:14px"><button class="btn" id="reloadLibBtn" type="button">Reload library</button></div>
-    <div class="sec-h">Adding a book</div>
-    <p class="hint" style="margin-top:0">Run the splitter on a PDF. It cuts the book into small files and adds each one to <code>library/map.json</code>:</p>
-    <code class="code">python tools/build_library.py "Book.pdf" --title "Book title" --id book-id --summarize gemini --key YOUR_KEY</code>
-    <p class="hint">Then press Reload library. See README.md for page offsets and manual ranges.</p>
   </div>
 </aside>
 
@@ -1172,9 +1149,9 @@ async function askFollowUp(sess, batch, q, text, atts) {
     }
     const idx = q.thread.findIndex(m => m.id === pend.id);
     q.thread[idx] = {
-      id: pend.id, role: 'astra', text: res.reply || 'I could not find an answer in your library.', ts: Date.now(),
+      id: pend.id, role: 'astra', text: res.reply || 'I could not find an answer in your sources.', ts: Date.now(),
       sources: res.academic ? snapCitations(res.sources, payload) : [],
-      flag: res.academic && !res.sufficient ? 'This is not fully covered in your library.' : '',
+      flag: res.academic && !res.sufficient ? 'This is not fully covered in your sources.' : '',
     };
   } catch (e) {
     const idx = q.thread.findIndex(m => m.id === pend.id);
@@ -1195,7 +1172,7 @@ async function runBatch(sess, batch, files) {
     batch.phase = 'extracting'; batch.error = ''; touchBatch(sess, batch);
     const ex = await extractQuestions(batch.text, files);
     if (!ex.academic) {
-      batch.phase = 'done'; batch.notice = ex.reason || 'Astra only answers academic questions from your library.'; touchBatch(sess, batch); return;
+      batch.phase = 'done'; batch.notice = ex.reason || 'Astra only answers academic questions from its sources.'; touchBatch(sess, batch); return;
     }
     let list = ex.questions;
     if (list.length > 60) { list = list.slice(0, 60); batch.notice = 'Astra solved the first 60 questions. Send the rest as a new message.'; }
@@ -1310,12 +1287,7 @@ function renderSidebar() {
 }
 function renderTop() { $('#topTitle').textContent = S.cur?.title || 'New session'; }
 
-function updateLibChrome() {
-  const books = Lib.books.size, files = Lib.chunks.size;
-  $('#libTail').textContent = Lib.status === 'ready' ? `${files} files` : Lib.status === 'loading' ? 'Loading' : 'Not loaded';
-  $('#libMeta').textContent = Lib.status === 'ready' ? `${books} ${books === 1 ? 'book' : 'books'}, ${files} files in the library` : '';
-  updateBanner();
-}
+function updateLibChrome() { updateBanner(); }
 function updateKeyChrome() {
   const dot = $('#keyDot'), tail = $('#keyTail');
   if (!settings.apiKeys.length) { dot.className = 'dot warn'; tail.textContent = 'Add a key'; }
@@ -1330,9 +1302,9 @@ function updateBanner() {
     bad = true;
     html = Lib.fileProtocol
       ? `Astra can't read the library when it is opened as a plain file. Double-click <code>start.bat</code> (Windows) or run <code>./start.sh</code> (Mac, Linux), then open <code>http://localhost:8000</code>.`
-      : `${esc(Lib.error || 'The library could not be loaded.')} <button data-act="reload-lib" type="button">Try again</button>`;
+      : `${esc(Lib.error || 'The sources could not be loaded.')} <button data-act="reload-lib" type="button">Try again</button>`;
   } else if (Lib.status === 'empty') {
-    html = `The library is empty. Add a book with <code>tools/build_library.py</code>, then <button data-act="reload-lib" type="button">reload the library</button>.`;
+    bad = true; html = 'No sources are installed in this copy of Astra, so there is nothing to answer from.';
   } else if (!settings.apiKeys.length) {
     html = `Add a Gemini API key to start answering. <button data-act="open-settings" type="button">Open settings</button>`;
   } else if (!Store.persistent) {
@@ -1351,13 +1323,9 @@ function renderFeed() {
   const s = S.cur;
   if (!s.batches.length) {
     const e = document.createElement('div'); e.className = 'empty'; e.id = 'emptyState';
-    const libLine = Lib.status === 'ready'
-      ? `Library ready: ${Lib.books.size} ${Lib.books.size === 1 ? 'book' : 'books'}, ${Lib.chunks.size} files.`
-      : Lib.status === 'loading' ? 'Loading the library…' : 'The library is not loaded yet.';
     e.innerHTML = `<h2>Paste your questions, or attach a photo or PDF of them</h2>
-      <p>Astra reads the questions, finds the right pages in your library, and answers with the book and page number.</p>
-      <p>Every answer has its own box underneath for follow-up questions.</p>
-      <div class="lib-line">${esc(libLine)}</div>`;
+      <p>Astra reads the questions, finds the right pages in your sources, and answers with the book and page number.</p>
+      <p>Every answer has its own box underneath for follow-up questions.</p>`;
     inner.append(e); return;
   }
   s.batches.forEach(b => inner.append(batchEl(b)));
@@ -1425,7 +1393,7 @@ function statusChip(q) {
   if (q.state === 'error') return '<span class="chip err">Could not solve</span>';
   if (r?.found === 'direct') return '<span class="chip found" title="The answer is stated in your sources">Found in sources</span>';
   if (r?.found === 'partial') return '<span class="chip partial" title="Your sources cover only part of this">Partly covered</span>';
-  return '<span class="chip none" title="Not stated in your library. These are the closest pages.">Closest match</span>';
+  return '<span class="chip none" title="Not stated in the sources. These are the closest pages.">Closest match</span>';
 }
 function rightOption(q, opts) {
   const r = q.result; if (!r) return -1;
@@ -1474,7 +1442,7 @@ function qMainHTML(q) {
     if (r.found === 'partial') h += `<div class="limit">Your sources cover only part of this.${r.missing ? ' ' + esc(r.missing) : ''}</div>`;
     h += '</div>';
   } else {
-    h += `<div class="block"><div class="limit none">Your library does not answer this directly.${r.missing ? ' ' + esc(r.missing) : ''} The closest pages are listed below.</div></div>`;
+    h += `<div class="block"><div class="limit none">The sources do not answer this directly.${r.missing ? ' ' + esc(r.missing) : ''} The closest pages are listed below.</div></div>`;
   }
   if (r.explanation) h += `<div class="block"><h3 class="block-h">${hasAnswer ? 'Explanation' : 'What the closest pages cover'}</h3><div class="prose" dir="auto">${md(r.explanation)}</div></div>`;
   if (r.sources?.length || r.closest?.length) {
@@ -1580,7 +1548,7 @@ async function addFollowFiles(card, files) {
 ══════════════════════════════════════════════════════════ */
 const persistable = a => ({ id: a.id, kind: a.kind, name: a.name, mime: a.mime, size: a.size, dataUrl: a.kind === 'image' ? a.dataUrl : undefined });
 function readyToAsk() {
-  if (Lib.status !== 'ready') { toast('The library is not loaded. See the message at the top.'); return false; }
+  if (Lib.status !== 'ready') { toast('The sources are not loaded. See the message at the top.'); return false; }
   if (!settings.apiKeys.length) { openDrawer('settingsDrawer'); toast('Add a Gemini API key first.'); return false; }
   return true;
 }
@@ -1635,18 +1603,18 @@ function copyCard(q) {
   const r = q.result; if (!r) return;
   const lines = [`${qLabel(q)}: ${q.text}`];
   (q.options || []).forEach(o => lines.push(`${o.label}. ${o.text}`));
-  lines.push('', `Answer: ${r.answerLabel ? r.answerLabel + '. ' : ''}${r.answer || '(not found in the library)'}`);
+  lines.push('', `Answer: ${r.answerLabel ? r.answerLabel + '. ' : ''}${r.answer || '(not found in the sources)'}`);
   if (r.explanation) lines.push('', 'Explanation: ' + r.explanation);
   if (r.sources?.length) lines.push('', 'Sources: ' + r.sources.map(s => `${s.book}, p. ${s.page}`).join('; '));
   navigator.clipboard?.writeText(lines.join('\n')).then(() => toast('Copied.'), () => toast('Could not copy.'));
 }
 
 /* ══════════════════════════════════════════════════════════
-   DRAWERS: SETTINGS + LIBRARY
+   DRAWER: SETTINGS
 ══════════════════════════════════════════════════════════ */
 function openDrawer(id) {
   closeDrawers(); $('#' + id).classList.add('open'); $('#scrim').classList.add('show');
-  if (id === 'settingsDrawer') renderKeys(); if (id === 'libraryDrawer') renderLibrary();
+  if (id === 'settingsDrawer') renderKeys();
 }
 function closeDrawers() { $$('.drawer').forEach(d => d.classList.remove('open')); $('#scrim').classList.remove('show'); }
 function openSidebar() { $('#sidebar').classList.add('open'); $('#sideScrim').classList.add('show'); }
@@ -1660,27 +1628,10 @@ function renderKeys() {
     const active = k.id === settings.activeKeyId, st = keyStatus(k.id);
     let cls = active ? 'active' : 'ready', txt = active ? 'In use' : 'Ready';
     if (st.excluded) { if (st.reason === 'invalid') { cls = 'error'; txt = 'Invalid'; } else { cls = 'limited'; txt = 'Rate-limited'; } }
-    return `<div class="key-row${active ? ' active' : ''}"><div class="key-top"><span class="key-label">${esc(k.label || 'Untitled key')}</span><span class="kchip ${cls}">${txt}</span></div><div class="key-val">${esc(maskKey(k.key))}</div><div class="key-act">${!active ? `<button type="button" data-kact="use" data-id="${k.id}">Use this key</button>` : ''}<button type="button" class="danger" data-kact="remove" data-id="${k.id}">Remove</button></div></div>`;
+    return `<div class="key-row${active ? ' active' : ''}"><div class="key-top"><span class="key-label">Key ${keys.indexOf(k) + 1}</span><span class="kchip ${cls}">${txt}</span></div><div class="key-val">${esc(maskKey(k.key))}</div><div class="key-act">${!active ? `<button type="button" data-kact="use" data-id="${k.id}">Use this key</button>` : ''}<button type="button" class="danger" data-kact="remove" data-id="${k.id}">Remove</button></div></div>`;
   }).join('');
   $('#rotationToggle').checked = !!settings.rotationEnabled;
   $('#imagesToggle').checked = !!settings.pageImages;
-  $('#modelSelect').value = settings.model;
-}
-
-function renderLibrary() {
-  const host = $('#libBody');
-  if (Lib.status === 'loading') { host.innerHTML = '<div class="empty-small">Loading…</div>'; return; }
-  if (Lib.status !== 'ready') {
-    host.innerHTML = `<div class="empty-small">${Lib.status === 'empty' ? 'No books yet.' : (Lib.fileProtocol ? 'Open Astra through <code>start.bat</code> or <code>./start.sh</code> so it can read the library.' : esc(Lib.error))}</div>`;
-    $('#libSub').textContent = 'The map Astra searches'; return;
-  }
-  $('#libSub').textContent = `${Lib.books.size} ${Lib.books.size === 1 ? 'book' : 'books'}, ${Lib.chunks.size} files`;
-  host.innerHTML = [...Lib.books.values()].map(b => {
-    const cs = [...Lib.chunks.values()].filter(c => c.book === b.id).sort((x, y) => x.startPage - y.startPage);
-    const sub = [b.author, `${cs.length} files`, b.totalPages ? `${b.totalPages} pages` : ''].filter(Boolean).join(', ');
-    return `<div class="book"><button class="book-h" type="button" data-book="${esc(b.id)}"><svg class="caret"><use href="#i-caret"/></svg><div><div class="book-t" dir="auto">${esc(b.title)}</div><div class="book-s" dir="auto">${esc(sub)}</div></div></button>
-      <div class="book-chunks">${cs.map(c => `<div class="ch"><a href="${esc(encodeURI(c.file))}" target="_blank" rel="noopener"><span class="pp">${c.startPage === c.endPage ? 'p. ' + c.startPage : 'pp. ' + c.startPage + '-' + c.endPage}</span><span dir="auto">${esc(c.title)}</span></a><p dir="auto">${esc(c.summary)}</p><div class="kw" dir="auto">${esc((c.keywords || []).slice(0, 12).join(', '))}${c.summarySource === 'auto-extract' ? '. Summary was extracted automatically.' : ''}</div></div>`).join('')}</div></div>`;
-  }).join('');
 }
 
 async function exportSessions() {
@@ -1772,7 +1723,6 @@ function wireEvents() {
     else closeSidebar();
   });
   $('#sessionList').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.classList.contains('sess')) e.target.click(); });
-  $('#openLibraryBtn').addEventListener('click', () => openDrawer('libraryDrawer'));
   $('#openSettingsBtn').addEventListener('click', () => openDrawer('settingsDrawer'));
   $('#menuBtn').addEventListener('click', openSidebar);
   $('#sideScrim').addEventListener('click', closeSidebar);
@@ -1780,16 +1730,12 @@ function wireEvents() {
   $$('[data-close]').forEach(b => b.addEventListener('click', closeDrawers));
   document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDrawers(); closeSidebar(); } });
 
-  // library drawer
-  $('#libBody').addEventListener('click', e => { const h = e.target.closest('.book-h'); if (h) h.parentElement.classList.toggle('open'); });
-  $('#reloadLibBtn').addEventListener('click', async () => { await loadLibrary(); updateLibChrome(); renderLibrary(); if (!S.cur.batches.length) renderFeed(); toast(Lib.status === 'ready' ? 'Library reloaded.' : 'The library could not be loaded.'); });
-
   // settings drawer
   $('#addKeyBtn').addEventListener('click', () => {
     const val = $('#newKeyValue').value.trim(); if (!val) { $('#newKeyValue').focus(); return; }
-    const id = genKeyId(); settings.apiKeys.push({ id, label: $('#newKeyLabel').value.trim() || 'API key', key: val });
+    const id = genKeyId(); settings.apiKeys.push({ id, key: val });
     if (!settings.apiKeys.find(k => k.id === settings.activeKeyId)) settings.activeKeyId = id;
-    $('#newKeyLabel').value = ''; $('#newKeyValue').value = ''; persistSettings(); updateKeyChrome(); renderKeys();
+    $('#newKeyValue').value = ''; persistSettings(); updateKeyChrome(); renderKeys();
   });
   $('#revealBtn').addEventListener('click', () => { const i = $('#newKeyValue'); i.type = i.type === 'password' ? 'text' : 'password'; });
   $('#keyList').addEventListener('click', e => {
@@ -1803,7 +1749,6 @@ function wireEvents() {
   });
   $('#rotationToggle').addEventListener('change', e => { settings.rotationEnabled = e.target.checked; persistSettings(); });
   $('#imagesToggle').addEventListener('change', e => { settings.pageImages = e.target.checked; persistSettings(); });
-  $('#modelSelect').addEventListener('change', e => { settings.model = e.target.value; _useFallbackModel = false; persistSettings(); });
   $('#exportBtn').addEventListener('click', exportSessions);
   $('#importBtn').addEventListener('click', () => $('#importFile').click());
   $('#importFile').addEventListener('change', e => { if (e.target.files[0]) importSessions(e.target.files[0]); e.target.value = ''; });
@@ -1834,7 +1779,8 @@ async function init() {
   wireEvents();
   await Store.init();
   settings = { ...settings, ...((await Store.getKV('settings')) || {}) };
-  if (!['gemini-2.5-flash', 'gemini-2.5-pro'].includes(settings.model)) settings.model = 'gemini-2.5-flash';
+  settings.model = 'gemini-2.5-flash';   // fixed: no model choice in the UI
+  settings.apiKeys.forEach(k => { delete k.label; });
   S.metas = await Store.listMeta();
   S.cur = makeSession(); S.live.set(S.cur.id, S.cur);
   updateKeyChrome(); renderAll();

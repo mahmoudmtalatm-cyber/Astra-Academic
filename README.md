@@ -7,7 +7,7 @@ No account. Sessions are saved in your browser (IndexedDB).
 - Windows: double-click `start.bat`. Mac/Linux: run `./start.sh`. Then use http://localhost:8000.
 - Or host the folder on any static host (GitHub Pages, Netlify). Opening `index.html` directly will not work
   because the browser blocks reading the library files.
-- Open **Settings**, paste a Gemini API key (free at https://aistudio.google.com/apikey).
+- Open **Settings**, paste a Gemini API key (keys are unlabeled; the model is fixed) (free at https://aistudio.google.com/apikey).
 
 Note: the PDFs in `library/` are served to anyone who can open the site. Do not publish copyrighted books on a public host.
 
@@ -20,11 +20,12 @@ Note: the PDFs in `library/` are served to anyone who can open the site. Do not 
    the card says "Closest match" and lists the closest pages. It never answers from memory.
 5. **Follow-up**: the box under each answer uses that answer's own sources first, then other files if they are not enough.
 
-## Add a book
+## Add a book (owner only, outside the app)
     pip install pypdf
     python tools/build_library.py "Book.pdf" --title "Book title" --id book-id --summarize gemini --key YOUR_KEY
 
-Then press **Reload library** in the app (Library panel).
+Books are added by whoever prepares the app, not by the person using it. Reload the page afterwards.
+The app has no screen for browsing or adding sources: sources only appear under each answer, after a question is solved.
 
 | Option | Use |
 |---|---|
